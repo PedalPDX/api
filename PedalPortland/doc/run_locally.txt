@@ -1,0 +1,20 @@
+Running Api Locally
+
+Requirements
+	Python Flask, Flask-restful
+	virtualenv
+
+Create a virtualenv
+	. ./script/create-env
+	This file will install virtual environment for working with 
+full requirements.
+
+Adding some stuffs in the virtual environment:
+	After create virtual environment, type the comment:
+		 "pip install "name of subject will be installed""
+	To update the new requirement file:
+		 you can run the command "pip freeze > requirement.txt"
+
+Running api
+	python api.py
+
