@@ -1,11 +1,11 @@
 PedalAPI
 ========
 
-from flask import Flask, jsonify, make_response, request
-from random import randint
-from os import listdir
-import json
-from markdown2 import markdown
+
+Depends
+-------
+* Flask
+* Markdown
 
 | Command                                           | Result                                               |
 | :--------                                         | :-------                                             |
