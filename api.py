@@ -7,7 +7,7 @@ from flask import Flask, jsonify, make_response, request
 from random import randint
 from os import listdir
 import json
-from markdown2 import markdown
+from markdown import markdown
 
 # The locations from which we will be handling flat files of JSON
 # data containing the ride logs
@@ -24,7 +24,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     with open("./README.md") as mark:
-        return markdown(mark.read())
+        return markdown(mark.read(), extensions=['tables'])
 
 # Error Handler
 # If the caller attempts to use a url not specified in the file, they will
@@ -52,7 +52,7 @@ def getRideByID(id):
         return json_data
 
 # get an available ride number, unique to the existing ride ID's
-@app.route('/pedal/'+apiVersion+'/rides/newID', methods = ['GET'])
+@app.route('/pedal/'+apiVersion+'/rides/new', methods = ['GET'])
 def getNewID():
     valid = False
     while not valid:
