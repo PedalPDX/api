@@ -35,6 +35,10 @@ def not_found(error):
 
 # GET ------------------------------------------------------------
 
+@app.route('/version', methods = ['GET'])
+def getVersion():
+    return jsonify({'version': str(apiVersion)})
+
 # Get all of the known rideID's
 @app.route('/pedal/'+apiVersion+'/rides', methods = ['GET'])
 def getAllRides():
