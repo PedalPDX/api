@@ -6,7 +6,7 @@
 from flask import Flask, jsonify, make_response, request
 from random import randint
 from os import listdir
-import json
+from json import dump,load
 from markdown import markdown
 
 # The locations from which we will be handling flat files of JSON
@@ -52,7 +52,7 @@ def getOneRide(id):
 # Get the information about a ride by using the ID number
 def getRideByID(id):
     with open(rideLocations+id) as ride:
-        json_data = json.load(ride)
+        json_data = load(ride)
         return json_data
 
 # get an available ride number, unique to the existing ride ID's
@@ -121,7 +121,7 @@ def addRideWithID(id):
             'points': request.json['points']
         }
         with open(rideLocations+id, 'w') as dataFile:
-            json.dump(ride, dataFile)
+            dump(ride, dataFile)
         return jsonify( { 'ride': ride } ), 201
 
 # Main ------------------------------------------------------------------------
