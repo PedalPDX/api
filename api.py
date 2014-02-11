@@ -14,7 +14,15 @@ from markdown import markdown
 rideLocations = "./rides/"
 
 # Current Version
-apiVersion = '0.3'
+apiVersion = '0.4'
+
+# The hostname of the server the api is hosted on
+# TODO: Make this into a function that will grab this information
+#       automatically.
+apiHostname = '127.0.0.1'
+
+# Port that the api will listen on.
+apiPort = "5000"
 
 # Pass the name of the app to flask
 app = Flask(__name__)
@@ -35,6 +43,7 @@ def not_found(error):
 
 # GET ------------------------------------------------------------
 
+# Get request to return the current version of the API
 @app.route('/version', methods = ['GET'])
 def getVersion():
     return jsonify({'version': str(apiVersion)})
@@ -55,19 +64,6 @@ def getRideByID(id):
         json_data = load(ride)
         return json_data
 
-# get an available ride number, unique to the existing ride ID's
-@app.route('/pedal/'+apiVersion+'/rides/new', methods = ['GET'])
-def getNewID():
-    valid = False
-    while not valid:
-        num = genNumber()
-        if num not in listdir(rideLocations):
-            id = {"id" : num}
-            return jsonify(id)
-
-def genNumber():
-    return randint(100000,999999)
-
 # POST -----------------------------------------------------------
 
 # When posting to /rides, the entire json, including the ride ID are required
@@ -78,51 +74,30 @@ def genNumber():
 def addRide():
     if not request.json:
         return make_response(jsonify({ 'error': 'Requires JSON format'}), 400)
-    elif not 'id' in request.json:
-        return make_response(jsonify({ 'error': 'Requires id field'}), 400)
-    elif not 'version' in request.json:
-        return make_response(jsonify({ 'error': 'Requires pedalAPI version'}), 400)
-    elif request.json['version'] != apiVersion:
-        return make_response(jsonify({ 'error': 'Incorrect PedalAPI version'}), 400)
+#    elif not 'version' in request.json:
+#        return make_response(jsonify({ 'error': 'Requires pedalAPI version'}), 400)
+#    elif request.json['version'] != apiVersion:
+#        return make_response(jsonify({ 'error': 'Incorrect PedalAPI version'}), 400)
     elif not 'points' in request.json:
         return make_response(jsonify({ 'error': 'Requires location information'}), 400)
-#    elif request.json['points'].empty():
-#        return make_response(jsonify( { 'error': 'Requires location information' } ), 400)
-    else:
-        ride = {
-            'id': request.json['id'],
-            'version': request.json['version'],
-            'points': request.json['points']
-        }
-        with open(rideLocations+str(request.json['id']), 'w') as dataFile:
-            json.dump(ride, dataFile)
-        return jsonify( { 'ride': ride } ), 201
-
-# When posting to /rides/IDNUM, the entire json, minus the the ride ID are checked
-# The function will do moderate data checking to ensure all appropriate fields
-# have been provided, and finally saves the data in the rideLocation directory
-# under a filename denoted by the ride ID
-@app.route('/pedal/'+apiVersion+'/rides/<string:id>', methods = ['POST'])
-def addRideWithID(id):
-    if not request.json:
-        return make_response(jsonify( { 'error': 'Requires JSON format' } ), 400)
-    elif not 'version' in request.json:
-        return make_response(jsonify( { 'error': 'Requires pedalAPI version' } ), 400)
-    elif request.json['version'] != apiVersion:
-        return make_response(jsonify( { 'error': 'Incorect PedalAPI version' } ), 400)
-    elif not 'points' in request.json:
+    elif not request.json['points']:
         return make_response(jsonify( { 'error': 'Requires location information' } ), 400)
-#    elif request.json['points'].empty():
-#        return make_response(jsonify( { 'error': 'Requires location information' } ), 400)
     else:
+        while True:
+            num = genNumber()
+            if num not in listdir(rideLocations):
+                break
         ride = {
-            'id': int(id),
-            'version': request.json['version'],
+            'id': str(num),
+            'version': apiVersion,
             'points': request.json['points']
         }
-        with open(rideLocations+id, 'w') as dataFile:
+        with open(rideLocations+str(num), 'w') as dataFile:
             dump(ride, dataFile)
-        return jsonify( { 'ride': ride } ), 201
+        return jsonify( { 'rideLink': apiHostname+':'+apiPort+'/pedal/'+apiVersion+'/rides/'+str(num) } ), 201
+
+def genNumber():
+    return randint(100000,999999)
 
 # Main ------------------------------------------------------------------------
 
