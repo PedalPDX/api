@@ -49,12 +49,12 @@ def getVersion():
     return jsonify({'version': str(apiVersion)})
 
 # Get all of the known rideID's
-@app.route('/pedal/'+apiVersion+'/rides', methods = ['GET'])
+@app.route('/rides', methods = ['GET'])
 def getAllRides():
     return jsonify({'RideIds': listdir(rideLocations)})
 
 # Get the information on a single ride using an ID
-@app.route('/pedal/'+apiVersion+'/rides/<string:id>', methods = ['GET'])
+@app.route('/rides/<string:id>', methods = ['GET'])
 def getOneRide(id):
     return jsonify(getRideByID(id))
 
@@ -70,14 +70,12 @@ def getRideByID(id):
 # The function will do moderate data checking to ensure all appropriate fields
 # have been provided, and finally saves the data in the rideLocation directory
 # under a filename denoted by the ride ID
-@app.route('/pedal/'+apiVersion+'/rides', methods = ['POST'])
+@app.route('/rides', methods = ['POST'])
 def addRide():
     if not request.json:
         return make_response(jsonify({ 'error': 'Requires JSON format'}), 400)
-#    elif not 'version' in request.json:
-#        return make_response(jsonify({ 'error': 'Requires pedalAPI version'}), 400)
-#    elif request.json['version'] != apiVersion:
-#        return make_response(jsonify({ 'error': 'Incorrect PedalAPI version'}), 400)
+    elif not 'version' in request.json:
+        return make_response(jsonify({ 'error': 'Requires version'}), 400)
     elif not 'points' in request.json:
         return make_response(jsonify({ 'error': 'Requires location information'}), 400)
     elif not request.json['points']:
@@ -89,12 +87,12 @@ def addRide():
                 break
         ride = {
             'id': str(num),
-            'version': apiVersion,
+            'version': request.json['version'],
             'points': request.json['points']
         }
         with open(rideLocations+str(num), 'w') as dataFile:
             dump(ride, dataFile)
-        return jsonify( { 'rideLink': apiHostname+':'+apiPort+'/pedal/'+apiVersion+'/rides/'+str(num) } ), 201
+        return jsonify( { 'RideURL': apiHostname+':'+apiPort+'/rides/'+str(num) } ), 201
 
 def genNumber():
     return randint(100000,999999)
