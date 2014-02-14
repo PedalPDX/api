@@ -40,12 +40,13 @@ curr = conn.cursor()
 # -----TESTING-----------
 
 # Select the rows from a test DB
-curr.execute("SELECT * FROM test;")
+curr.execute("SELECT * FROM rides;")
 
-# Fetch the list of tuples from the cursor, and store into the results variable
+# Fetch the list of tuples from the cursor, and store into 'databaseResults'
 databaseResults = curr.fetchall()
+debug("DtabaseResults", databaseResults)
 
-# Print each of the rows
+# Print each of the rows for debugging
 for row in databaseResults:
 	debug("Row",row[0])
 
