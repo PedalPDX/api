@@ -66,10 +66,47 @@ def getRideByID(id):
 
 # POST -----------------------------------------------------------
 
-# When posting to /rides, the entire json, including the ride ID are required
-# The function will do moderate data checking to ensure all appropriate fields
-# have been provided, and finally saves the data in the rideLocation directory
-# under a filename denoted by the ride ID
+# deURL": "127.0.0.1:5000/rides/812241"The only POST function currently implemented is for posting rides to the server
+# necessary arguuments are the post version number, and a list of points in JSON.
+# Currently, input should contain JSON like the following:
+#    {
+#    "points": [
+#        {
+#            "accuracy": 4.0,
+#            "latitude": 45.4,
+#            "longitude": -122.22,
+#            "time": "2013-1-12-3:21:32"
+#            },
+#        {
+#            "accuracy": 5.0,
+#            "latitude": 45.4,
+#            "longitude": -126.48,
+#            "time": "2013-1-12-3:25:32"
+#            }
+#        ],
+#    "version": 0.3
+#    }
+#
+# Once the information has been posted, the user will recieve JSON back, like so:
+#{
+#    "RideURL": "127.0.0.1:5000/rides/812241"
+#}
+#
+# A URL in which the user may do a GET request in order to recieve the information
+# back from the server, which will be identical, plus the added id field, like so:
+#    {
+#    "id": "812241",
+#    "points": [
+#        {
+#            "accuracy": 4.0,
+#            "latitude": 45.4,
+#            "longitude": -122.22,
+#            "time": "210123"
+#            }
+#        ],
+#    "version": 0.3
+#    }
+#
 @app.route('/rides', methods = ['POST'])
 def addRide():
     if not request.json:
