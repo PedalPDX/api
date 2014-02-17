@@ -17,20 +17,16 @@ RIDELOCATIONS = "./rides/"
 # Current Version
 APIVERSION = '0.4'
 
-# The hostname of the server the api is hosted on
+# The hostname of the server the API is hosted on
 APIHOSTNAME = '127.0.0.1'
 
-# Port that the api will listen on.
+# Port that the API will listen on.
 APIPORT = "5000"
 
-<<<<<<< HEAD
-# Pass the name of the APP to flask
-=======
 # URLSTRING identifies the base for the API's URL
 URLSTRING = 'http://' + APIHOSTNAME + ':' + APIPORT
 
 # Pass the name of the app to flask
->>>>>>> fb4627a... sqsh into style guid fix
 APP = Flask(__name__)
 
 
@@ -48,8 +44,8 @@ def index():
 @APP.errorhandler(404)
 def not_found(error):
     """
-    If the caller attempts to use a url not specified in the file, they will
-    be given json information stating that there is no such page.
+    If the caller attempts to use a URL not specified in the file, they will
+    be given JSON information stating that there is no such page.
     """
     return make_response(jsonify({'error': 'Not found'}), 404)
 
@@ -64,11 +60,11 @@ def get_version():
 
 @APP.route('/rides', methods=['GET'])
 def get_all_rides():
-    """ Get all of the known rideID's """
+    """ Get all of the known ride IDs """
     return jsonify({'RideIds': listdir(RIDELOCATIONS)})
 
 
-@APP.route('/rides/<string:rideid>', methods=['GET'])
+@APP.route('/rides/<string:ride_id>', methods=['GET'])
 def get_one_ride(ride_id):
     """ Get the information on a single ride using an ID """
     return jsonify(get_ride_by_id(ride_id))
@@ -86,9 +82,11 @@ def get_ride_by_id(ride_id):
 @APP.route('/rides', methods=['POST'])
 def add_ride():
     """
-    deURL": "127.0.0.1:5000/rides/812241"The only POST function currently
-    implemented is for posting rides to the server necessary arguuments are the
-    post version number, and a list of points in JSON. Currently, input should
+    rideURL: 127.0.0.1:5000/rides/812241
+
+    The only POST function currently implemented is for posting rides to the
+    server necessary arguments are the post version number, and a list of
+    points in JSON. Currently, input should
     contain JSON like the following:
         {
         "points": [
@@ -106,17 +104,18 @@ def add_ride():
                 }
             ],
         "version": 0.3
+        "hash" : 12343234
         }
 
-    Once the information has been posted, the user will recieve JSON back.
+    Once the information has been posted, the user will receive JSON back.
     like so:
     {
         "RideURL": "127.0.0.1:5000/rides/812241"
     }
 
-    A URL in which the user may do a GET request in order to recieve the
-    information back from the server, which will be identical, plus the
-    added id field, like so:
+    A URL in which the user may do a GET request in order to receive the
+    information back from the server:
+
         {
         "id": "812241",
         "points": [
@@ -129,11 +128,14 @@ def add_ride():
             ],
         "version": 0.3
         }
+
     """
     if not request.json:
         return make_response(jsonify({'error': 'Requires JSON format'}), 400)
     elif not 'version' in request.json:
         return make_response(jsonify({'error': 'Requires version'}), 400)
+    elif not 'hash' in request.json:
+        return make_response(jsonify({'error': 'Requires client hash'}), 400)
     elif not 'points' in request.json:
         return make_response(jsonify(
             {'error': 'Requires location information'}), 400)
@@ -147,6 +149,7 @@ def add_ride():
                 break
         ride = {
             'id': str(num),
+            'hash': request.json['hash'],
             'version': request.json['version'],
             'points': request.json['points']
         }

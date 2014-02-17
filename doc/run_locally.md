@@ -18,7 +18,7 @@ your prompt includes the new `(venv)` label indicating that you are running
 in a virtual environment. 
 
 ### Adding Packages
-Once the environmet is created you can use `pip indstall` to add python
+Once the environment is created you can use `pip install` to add python
 modules to the environment. For example: `pip install fastkml` to install
 the fast-kml library to the environment.
 
