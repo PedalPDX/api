@@ -132,11 +132,11 @@ def add_ride():
     """
     if not request.json:
         return make_response(jsonify({'error': 'Requires JSON format'}), 400)
-    elif not 'version' in request.json:
+    elif 'version' not in request.json:
         return make_response(jsonify({'error': 'Requires version'}), 400)
-    elif not 'hash' in request.json:
+    elif 'hash' not in request.json:
         return make_response(jsonify({'error': 'Requires client hash'}), 400)
-    elif not 'points' in request.json:
+    elif 'points' not in request.json:
         return make_response(jsonify(
             {'error': 'Requires location information'}), 400)
     elif not request.json['points']:
