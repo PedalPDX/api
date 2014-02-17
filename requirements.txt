@@ -1,12 +1,11 @@
 Flask==0.10.1
-Flask-RESTful==0.2.11
 Jinja2==2.7.2
+Markdown==2.3.1
 MarkupSafe==0.18
-SQLAlchemy==0.9.1
 Werkzeug==0.9.4
-aniso8601==0.82
 argparse==1.2.1
 itsdangerous==0.23
-pytz==2013.9
+pygeoif==0.4.1
+python-dateutil==2.2
 six==1.5.2
 wsgiref==0.1.2
