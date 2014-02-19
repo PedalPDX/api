@@ -3,6 +3,8 @@
 rides/*
 Secrets.py
 venv/*
+*.swp
+logs/*
 
 # C extensions
 *.so
