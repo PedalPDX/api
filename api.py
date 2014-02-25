@@ -41,13 +41,24 @@ def index():
         return markdown(mark.read(), extensions=['tables'])
 
 
+def error_gen(http_stat, error_code, error_desc):
+    """
+    Return a response to the requester with the given error. The HTTP code
+    determines the http response code to send back. The Error code field is
+    used to identify the particular issue that has been raised. The description
+    is a human readable explanation of the issue.
+    """
+    response = {'error': str(error_desc), 'code': int(error_code)}
+    return make_response(jsonify(response), http_stat)
+
+
 @APP.errorhandler(404)
 def not_found(error):
     """
     If the caller attempts to use a URL not specified in the file, they will
     be given JSON information stating that there is no such page.
     """
-    return make_response(jsonify({'error': 'Not found'}), 404)
+    return error_gen(404, 100, "Requested page does not exist")
 
 # GET ------------------------------------------------------------
 
@@ -67,6 +78,8 @@ def get_all_rides():
 @APP.route('/rides/<string:ride_id>', methods=['GET'])
 def get_one_ride(ride_id):
     """ Get the information on a single ride using an ID """
+    if ride_id not in listdir(RIDELOCATIONS):
+        return error_gen(400, 200, "Ride Not Found")
     return jsonify(get_ride_by_id(ride_id))
 
 
@@ -131,17 +144,15 @@ def add_ride():
 
     """
     if not request.json:
-        return make_response(jsonify({'error': 'Requires JSON format'}), 400)
+        return error_gen(400, 300, "Requires JSON format")
     elif 'version' not in request.json:
-        return make_response(jsonify({'error': 'Requires version'}), 400)
+        return error_gen(400, 310, "Missing 'version' field")
     elif 'hash' not in request.json:
-        return make_response(jsonify({'error': 'Requires client hash'}), 400)
+        return error_gen(400, 311, "Missing 'hash' field")
     elif 'points' not in request.json:
-        return make_response(jsonify(
-            {'error': 'Requires location information'}), 400)
+        return error_gen(400, 312, "Missing 'points' field")
     elif not request.json['points']:
-        return make_response(jsonify(
-            {'error': 'Requires location information'}), 400)
+        return error_gen(400, 320, "Missing location information")
     else:
         while True:
             num = gen_number()
