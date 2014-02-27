@@ -63,6 +63,17 @@ def not_found(error):
     """
     return error_gen(404, 100, "Requested page does not exist")
 
+
+@app.route('/VirtualEnvironment/run_locally.md')
+def run_locally():
+    """
+    If the requestor clicks on the link to see the documentation for
+    running the app in a virtual environment, retrieve the page and
+    serve it, after having converted from markdown to HTML.
+    """
+    with open(API_ROOT + "/VirtualEnvironment/run_locally.md") as mark:
+        return markdown(mark.read(), extensions=['tables'])
+
 # GET ------------------------------------------------------------
 
 
