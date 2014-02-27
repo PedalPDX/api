@@ -9,6 +9,8 @@ from random import randint
 from os import listdir
 from json import dump, load
 from markdown import markdown
+import Secrets
+import psycopg2
 
 # API root Directory
 API_ROOT = "/var/www/api/"
@@ -188,6 +190,61 @@ def gen_number():
     """ Generate a random 6 digit number """
     return randint(100000, 999999)
 
+def kml_maker(id, line_color, line_width, points):
+    """
+    kml_maker is in charge of making a kml string that can be returned through
+    the API upon request
+    """
+    points_string = ""
+    for (lng,lat) in points:
+        s = lng + "," + lat + ',0'
+        if not points_string:
+            points_string = s
+        else:
+            points_string += '\n            ' + s
+    kml ="""<?xml version="1.0" encoding="UTF-8"?>
+  <kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+      <name>Pedal PDX trip-{0}</name>
+      <description>Route as collected from Pedal PDX Android App.</description>
+      <Style id="line">
+        <LineStyle>
+          <color>{1}</color>
+          <width>{2}</width>
+        </LineStyle>
+        <PolyStyle>
+          <color>7f00ff00</color>
+        </PolyStyle>
+      </Style>
+      <Placemark>
+        <name>Pedal PDX trip</name>
+        <description>Route as collected from Pedal PDX Android App.</description>
+        <styleUrl>#line</styleUrl>
+        <LineString>
+          <extrude>1</extrude>
+          <tessellate>1</tessellate>
+          <altitudeMode>absolute</altitudeMode>
+          <coordinates>
+            {3}
+          </coordinates>
+        </LineString>
+      </Placemark>
+    </Document>
+  </kml>""".format(id, line_color, line_width, points_string)
+    return kml
+
+@app.route('/rides/kml/<string:ride_id>', methods=['POST'])
+def get_kml(ride_id):
+    if not request.form:
+        error_gen(404,600,"Must include form arguments")
+    if not request.form["color"]:
+        error_gen(404,600,"Must specify line color")
+    if not request.form["thickness"]:
+        error_gen(404,600,"Must specify line thickness")
+    color = request.form["color"]
+    thick = request.form["thickness"]
+    kml_string = kml_maker(ride_id, color, thick, [("12", "34"),("12", "34"),("12", "34")])
+    return kml_string
 # Main ------------------------------------------------------------------------
 
 
