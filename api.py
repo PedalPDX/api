@@ -4,7 +4,7 @@ PedalAPI
 The following is the RESTFULL API for use by PedalPDX
 """
 
-from flask import Flask, jsonify, make_response, request
+from flask import Flask, jsonify, make_response, request, redirect
 from random import randint
 from os import listdir
 from json import dump, load
@@ -23,10 +23,10 @@ RIDELOCATIONS = API_ROOT + "/rides/"
 APIVERSION = '0.4'
 
 # The hostname of the server the API is hosted on
-APIHOSTNAME = '127.0.0.1'
+APIHOSTNAME = 'pedal.cs.pdx.edu'
 
 # Port that the API will listen on.
-APIPORT = "5000"
+APIPORT = "5005"
 
 # URLSTRING identifies the base for the API's URL
 URLSTRING = 'http://' + APIHOSTNAME + ':' + APIPORT
@@ -233,20 +233,35 @@ def kml_maker(id, line_color, line_width, points):
   </kml>""".format(id, line_color, line_width, points_string)
     return kml
 
-@app.route('/rides/kml/<string:ride_id>', methods=['POST'])
+@app.route('/kml/<string:ride_id>', methods=['GET'])
 def get_kml(ride_id):
-    if not request.form:
-        error_gen(404,600,"Must include form arguments")
-    if not request.form["color"]:
-        error_gen(404,600,"Must specify line color")
-    if not request.form["thickness"]:
-        error_gen(404,600,"Must specify line thickness")
-    color = request.form["color"]
-    thick = request.form["thickness"]
-    kml_string = kml_maker(ride_id, color, thick, [("12", "34"),("12", "34"),("12", "34")])
-    return kml_string
+    #    if not request.form:
+#        error_gen(404,600,"Must include form arguments")
+#    if not request.form["color"]:
+#        error_gen(404,600,"Must specify line color")
+#    if not request.form["thickness"]:
+#        error_gen(404,600,"Must specify line thickness")
+#    color = request.form["color"]
+#    thick = request.form["thickness"]
+    if ride_id not in listdir(RIDELOCATIONS):
+                return error_gen(400, 200, "Ride Not Found")
+    json_data = get_ride_by_id(ride_id)
+    point_field = json_data['points']
+    points = []
+    for p in point_field:
+                points.append((str(p['longitude']),str(p['latitude'])))
+    kml_string = kml_maker(ride_id, "7fff0000", "9", points)
+    response = make_response(kml_string)
+    response.headers["Content-Type"] = "application/kml"
+    return response
+
+
+@app.route('/map/<string:ride_id>', methods=['GET'])
+def get_map(ride_id):
+    return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+':5002/kml/'+ride_id,302)
+
 # Main ------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=APIPORT)
