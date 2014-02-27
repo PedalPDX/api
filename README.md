@@ -13,13 +13,15 @@ This API is for use by the [PedalPDXApplication](http://pedal.cs.pdx.edu) bicycl
 Commands
 --------
 
-| Type | Command                            | Result                                      |
-| :----| :----------------------------------| :------------------------------------------ |
-| GET  | server.address.com:5000/           | Returns this README                         |
-| GET  | server.address.com:5000/version    | Returns the current version of the PedalAPI |
-| GET  | server.address.com:5000/rides      | Returns all know ride ID's                  |
-| GET  | server.address.com:5000/rides/{ID} | Returns information on the specified id     |
-| POST | server.address.com:5000/rides      | Used for uploading ride information         |
+| Type  | Command                             | Result                                        |
+| :---- | :---------------------------------- | :------------------------------------------   |
+| GET   | server.address.com:5000/            | Returns this README                           |
+| GET   | server.address.com:5000/version     | Returns the current version of the PedalAPI   |
+| GET   | server.address.com:5000/rides       | Returns all know ride ID's                    |
+| GET   | server.address.com:5000/rides/{ID}  | Returns information on the specified id       |
+| GET   | server.address.com:5000/kml/{ID}    | Returns a KML file of the ride                |
+| GET   | server.address.com:5000/map/{ID}    | Redirects you to Google maps to view the ride |
+| POST  | server.address.com:5000/rides       | Used for uploading ride information           |
 
 
 Error Responses
