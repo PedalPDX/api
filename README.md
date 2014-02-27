@@ -6,6 +6,10 @@ Depends
 * Flask
 * Markdown
 
+About the API
+-------------
+This API is for use by the [PedalPDXApplication](http://pedal.cs.pdx.edu) bicycle route tracking application.
+
 Commands
 --------
 
@@ -36,11 +40,7 @@ the issue arose.
 | 320   | Missing location information in point data |
 
 
-
-
-
-
-
-
-
-
+Install
+-------
+To run this application locally, you may want to use a 
+[virtual environment](VirtualEnvironment/run_locally.md) to handle dependencies.

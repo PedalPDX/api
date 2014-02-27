@@ -2,9 +2,9 @@
 *.py[cod]
 rides/*
 Secrets.py
-venv/*
 *.swp
 logs/*
+VirtualEnvironment/venv/*
 
 # C extensions
 *.so
