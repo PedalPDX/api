@@ -26,10 +26,10 @@ APIVERSION = '0.4'
 APIHOSTNAME = 'pedal.cs.pdx.edu'
 
 # Port that the API will listen on.
-APIPORT = "5005"
+APIPORT = 5005
 
 # URLSTRING identifies the base for the API's URL
-URLSTRING = 'http://' + APIHOSTNAME + ':' + APIPORT
+URLSTRING = 'http://' + APIHOSTNAME + ':' + str(APIPORT)
 
 # Pass the name of the app to flask
 app = Flask(__name__)
@@ -205,8 +205,15 @@ def kml_maker(id, line_color, line_width, points):
     kml ="""<?xml version="1.0" encoding="UTF-8"?>
   <kml xmlns="http://www.opengis.net/kml/2.2">
     <Document>
-      <name>Pedal PDX trip-{0}</name>
-      <description>Route as collected from Pedal PDX Android App.</description>
+      <name>Pedal PDX trip {0}</name>
+      <description>
+       Distance: 5 Bagillion ft.\n
+       AVG Spped: Ludacris speed\n
+       Total time: 42 seconds\n
+       Num Hotties passed: 6\n
+       Donuts Burned: 22\n
+       Num songs stuck in head: 3\n
+      </description>
       <Style id="line">
         <LineStyle>
           <color>{1}</color>
@@ -217,8 +224,15 @@ def kml_maker(id, line_color, line_width, points):
         </PolyStyle>
       </Style>
       <Placemark>
-        <name>Pedal PDX trip</name>
-        <description>Route as collected from Pedal PDX Android App.</description>
+        <name>Pedal PDX trip {0}</name>
+        <description>
+          Distance: 5 Bagillion ft.\n
+          AVG Spped: Ludacris speed\n
+          Total time: 42 seconds\n
+          Num Hotties passed: 6\n
+          Donuts Burned: 22\n
+          Num songs stuck in head: 3\n
+        </description>
         <styleUrl>#line</styleUrl>
         <LineString>
           <extrude>1</extrude>
@@ -233,16 +247,43 @@ def kml_maker(id, line_color, line_width, points):
   </kml>""".format(id, line_color, line_width, points_string)
     return kml
 
+
+def query_db(ride_id, accuracy, start_time, end_time):
+    try:
+        # Attempt to make a connection to the Database
+        conn = psycopg2.connect(
+             "dbname=" + Secrets.dbname +
+             " user=" + Secrets.username +
+             " host=" + Secrets.hostname +
+             " password=" + Secrets.password)
+    except:
+        # On Failure, output a message saying so and retreat
+        return ""
+
+    query = "SELECT ST_X(point), ST_Y(point) FROM points WHERE rideid = %s"
+    args = filter(lambda x: x != "", [ride_id, accuracy, start_time, end_time])
+
+    if accuracy:
+                query += " AND accuracy < %s"
+    if start_time:
+                query += " AND time > %s"
+    if end_time:
+                query += " AND time < %s"
+
+    # Create a psycopg2 cursor for the DB
+    curr = conn.cursor()
+
+    curr.execute(query, args)
+    points = map(lambda (x,y): (str(x), str(y)), curr.fetchall())
+
+    # End the cursor
+    curr.close()
+    # End the connection to the DB
+    conn.close()
+    return points
+
 @app.route('/kml/<string:ride_id>', methods=['GET'])
 def get_kml(ride_id):
-    #    if not request.form:
-#        error_gen(404,600,"Must include form arguments")
-#    if not request.form["color"]:
-#        error_gen(404,600,"Must specify line color")
-#    if not request.form["thickness"]:
-#        error_gen(404,600,"Must specify line thickness")
-#    color = request.form["color"]
-#    thick = request.form["thickness"]
     if ride_id not in listdir(RIDELOCATIONS):
                 return error_gen(400, 200, "Ride Not Found")
     json_data = get_ride_by_id(ride_id)
@@ -254,6 +295,43 @@ def get_kml(ride_id):
     response = make_response(kml_string)
     response.headers["Content-Type"] = "application/kml"
     return response
+
+
+
+@app.route('/kml', methods=['POST'])
+def get_kml_form():
+        # Make sure the POST is correctly defined
+    if not request.form:
+                error_gen(400,400,"Must include form arguments")
+    if not request.form["id"]:
+                error_gen(400,410,"Must specify ride id")
+    if not request.form["thickness"]:
+                error_gen(400,411,"Must specify line thickness")
+    if not request.form['accuracy']:
+                error_gen(400,412,"Must specify accuracy threshold")
+    if not request.form['start']:
+                error_gen(400,413,"Must specify starting time")
+    if not request.form['end']:
+                error_gen(400,414,"Must specify ending time")
+    if not request.form["color"]:
+                error_gen(400,415,"Must specify line color")
+
+    # Accumulate the arguments
+    color = request.form["color"]
+    thick = request.form["thickness"]
+    ride_id = request.form["id"]
+    accuracy = request.form["accuracy"]
+    start = request.form["start"]
+    end = request.form["end"]
+
+    points = query_db(ride_id, accuracy, start, end)
+
+    kml_string = kml_maker(ride_id, color, thick, points)
+    response = make_response(kml_string)
+    response.headers["Content-Type"] = "application/kml"
+    return response
+
+
 
 
 @app.route('/map/<string:ride_id>', methods=['GET'])
