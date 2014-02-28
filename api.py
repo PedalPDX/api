@@ -26,10 +26,10 @@ APIVERSION = '0.4'
 APIHOSTNAME = 'pedal.cs.pdx.edu'
 
 # Port that the API will listen on.
-APIPORT = 5005
+APIPORT = 5002
 
 # URLSTRING identifies the base for the API's URL
-URLSTRING = 'http://' + APIHOSTNAME + ':' + str(APIPORT)
+URLSTRING = 'http://' + APIHOSTNAME + ':' + str(APIPORT) + "/"
 
 # Pass the name of the app to flask
 app = Flask(__name__)
@@ -38,8 +38,16 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     """
+    redirect toe the readme file for reference.
+    """
+    return redirect(URLSTRING + "/README.md", 302)
+
+
+@app.route('/README.md')
+def readme():
+    """
     Define a simple function for returning useful information about the
-    pedalAPI Converts the markdown README into html and serves to the
+    PedalAPI Converts the markdown README into html and serves to the
     requester
     """
     with open(API_ROOT + "/README.md") as mark:
@@ -313,7 +321,7 @@ def get_kml_form():
                 error_gen(400,413,"Must specify starting time")
     if not request.form['end']:
                 error_gen(400,414,"Must specify ending time")
-    if not request.form["color"]:
+    if not request.form['color']:
                 error_gen(400,415,"Must specify line color")
 
     # Accumulate the arguments
