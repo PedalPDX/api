@@ -5,6 +5,7 @@ Depends
 -------
 * Flask
 * Markdown
+* psycopg2
 
 About the API
 -------------
@@ -40,6 +41,7 @@ To get a custom modified KML file of the ride you may type:
 `curl -X POST -F "color=red" -F "thickness=4" -F "id=874323" -F "start=2014-02-06 14:30" -F "end=2014-02-06 14:32" -F "accuracy=50" 127.0.0.1:5005/kml`
 
 The route will:
+
 * Have the route colored with a red line
 * draw the line using a thickness of 4
 * involve points from the 874323 route id
