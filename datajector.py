@@ -42,6 +42,7 @@ def debug(debug_string):
 
 # Functions -------------------------------------------------------------------
 
+
 def get_stored_ids():
     """ Get the list of rides currently stored in the DB """
     rides_in_db = []
@@ -92,23 +93,23 @@ def add_ride(ride_id):
         except:
             # If failure occurs, Log the error, and rollback the transaction
             loggit('MALFORMED_RIDE_ERROR',
-                    'Could not successfully parse JSON in ride: ' + ride_id)
+                   'Could not successfully parse JSON in ride: ' + ride_id)
             conn.rollback()
             return -1
         # Ensure that the information contains an 'id' field
         if 'id' not in json_data:
             loggit('MALFORMED_RIDE_ERROR',
-                    'Missing ride hash in ride: ' + ride_id)
+                   'Missing ride hash in ride: ' + ride_id)
             return -1
         # Ensure that the information contains a 'version' field
         if 'version' not in json_data:
             loggit('MALFORMED_RIDE_ERROR',
-                    'Missing version in ride: ' + ride_id)
+                   'Missing version in ride: ' + ride_id)
             return -1
         # Ensure that the information contains a 'points' array
         if 'points' not in json_data:
             loggit('MALFORMED_RIDE_ERROR',
-                    'Missing points in ride: ' + ride_id)
+                   'Missing points in ride: ' + ride_id)
             return -1
         # Get all of the required JSON information and store into variables
         ride_hash = json_data['id']
@@ -120,8 +121,8 @@ def add_ride(ride_id):
         except:
             # If Failure occurs, log and rollback. Then return
             loggit('DB_ERROR',
-                    'Error inserting ride information into db from ride: ' +
-                    ride_id)
+                   'Error inserting ride information into db from ride: ' +
+                   ride_id)
             conn.rollback()
             return -2
         # Iterate through the points, verify and add to the DB
@@ -129,30 +130,28 @@ def add_ride(ride_id):
             # Ensure 'accuracy' field is present
             if 'accuracy' not in point:
                 loggit('MALFORMED POINT_ERROR',
-                        'Missing accuracy for ride: ' + ride_id)
+                       'Missing accuracy for ride: ' + ride_id)
                 return -1
             # Ensure 'time' field is present
             if 'time' not in point:
                 loggit('MALFORMED POINT_ERROR',
-                        'Missing time for ride: ' + ride_id)
+                       'Missing time for ride: ' + ride_id)
                 return -1
             # Ensure 'longitude' field is present
             if 'longitude' not in point:
                 loggit('MALFORMED POINT_ERROR',
-                        'Missing longitude for ride: ' + ride_id)
+                       'Missing longitude for ride: ' + ride_id)
                 return -1
             # Ensure 'latitude' field is present
             if 'latitude' not in point:
                 loggit('MALFORMED POINT_ERROR',
-                        'Missing latitude for ride: ' + ride_id)
+                       'Missing latitude for ride: ' + ride_id)
                 return -1
             # Collect the information into Variables
             point_acc = point['accuracy']
             point_time = point['time']
             point_long = point['longitude']
             point_lat = point['latitude']
-            # Construct the postgis Geometry POINT
-            point_geog = "POINT(" + str(point_lat) + ' ' + str(point_long) + ')'
             try:
                 # Make an attempt to add the point to the DB
                 curr.execute(
@@ -174,11 +173,10 @@ def add_ride(ride_id):
 if __name__ == '__main__':
     try:
         # Attempt to make a connection to the Database
-        conn = psycopg2.connect(
-                "dbname=" + Secrets.dbname +
-                " user=" + Secrets.username +
-                " host=" + Secrets.hostname +
-                " password=" + Secrets.password)
+        conn = psycopg2.connect("dbname=" + Secrets.dbname +
+                                " user=" + Secrets.username +
+                                " host=" + Secrets.hostname +
+                                " password=" + Secrets.password)
     except:
         # On Failure, output a message saying so and retreat
         loggit('ERROR', "Unable to connect to the database")
