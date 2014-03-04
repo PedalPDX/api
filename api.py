@@ -9,6 +9,7 @@ from random import randint
 from os import listdir
 from json import dump, load
 from markdown import markdown
+import time
 import Secrets
 import psycopg2
 
@@ -19,17 +20,20 @@ API_ROOT = "/var/www/api/"
 # data containing the ride logs
 RIDELOCATIONS = API_ROOT + "/rides/"
 
+# Log locations
+LOG_DIR = API_ROOT + "/logs/"
+
 # Current Version
 APIVERSION = '0.4'
 
 # The hostname of the server the API is hosted on
-APIHOSTNAME = 'pedal.cs.pdx.edu'
+APIHOSTNAME = 'api.pedal.cs.pdx.edu'
 
 # Port that the API will listen on.
-APIPORT = 5002
+APIPORT = 5001
 
 # URLSTRING identifies the base for the API's URL
-URLSTRING = 'http://' + APIHOSTNAME + ':' + str(APIPORT) + "/"
+URLSTRING = 'http://' + APIHOSTNAME 
 
 # Pass the name of the app to flask
 app = Flask(__name__)
@@ -59,9 +63,16 @@ def error_gen(http_stat, error_code, error_desc):
     Return a response to the requester with the given error. The HTTP code
     determines the http response code to send back. The Error code field is
     used to identify the particular issue that has been raised. The description
-    is a human readable explanation of the issue.
+    is a human readable explanation of the issue. Also returns the cuurent time of
+the server. All this information in also dumped to logs.
     """
-    response = {'error': str(error_desc), 'code': int(error_code)}
+    now = time.strftime("%c")
+    response = {'error': str(error_desc), 
+                'code': int(error_code),
+		'time': now}
+    with open(LOG_DIR+"error.log", "a") as log_file:
+	dump(response, log_file)
+        log_file.write("\n")
     return make_response(jsonify(response), http_stat)
 
 
@@ -71,7 +82,7 @@ def not_found(error):
     If the caller attempts to use a URL not specified in the file, they will
     be given JSON information stating that there is no such page.
     """
-    return error_gen(404, 100, "Requested page does not exist")
+    return error_gen(404, 100, "Requested page " + request.path + " does not exist")
 
 
 @app.route('/VirtualEnvironment/run_locally.md')
@@ -147,7 +158,7 @@ def add_ride():
     Once the information has been posted, the user will receive JSON back.
     like so:
     {
-        "RideURL": "127.0.0.1:5000/rides/812241"
+        "RideURL": "api.pedal.cs.pdx.edu/rides/812241"
     }
 
     A URL in which the user may do a GET request in order to receive the
@@ -340,11 +351,16 @@ def get_kml_form():
     return response
 
 
-
-
 @app.route('/map/<string:ride_id>', methods=['GET'])
 def get_map(ride_id):
-    return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+':5002/kml/'+ride_id,302)
+    return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+'/kml/'+ride_id,302)
+
+
+
+# @app.route('/latest', methods=['GET'])
+# def get_map(ride_id):
+#     last = response.values.get("last")
+#     return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+':5002/kml/'+ride_id,302)
 
 # Main ------------------------------------------------------------------------
 

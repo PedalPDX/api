@@ -1,6 +1,7 @@
 # Local Files
 *.py[cod]
 rides/*
+logs/*
 Secrets.py
 *.swp
 logs/*
