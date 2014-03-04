@@ -14,31 +14,31 @@ This API is for use by the [PedalPDXApplication](http://pedal.cs.pdx.edu) bicycl
 Commands
 --------
 
-| Type  | Command                             | Result                                        |
-| :---- | :---------------------------------- | :------------------------------------------   |
-| GET   | server.address.com:5000/            | Returns this README                           |
-| GET   | server.address.com:5000/version     | Returns the current version of the PedalAPI   |
-| GET   | server.address.com:5000/rides       | Returns all know ride ID's                    |
-| GET   | server.address.com:5000/rides/{ID}  | Returns information on the specified id       |
-| GET   | server.address.com:5000/kml/{ID}    | Returns a KML file of the ride                |
-| GET   | server.address.com:5000/map/{ID}    | Redirects you to Google maps to view the ride |
-| POST  | server.address.com:5000/rides       | Used for uploading ride information           |
-| POST  | server.address.com:5000/kml         | Uses form data to construct a kml file        |
+| Type  | Command                          | Result                                        |
+| :---- | :------------------------------- | :------------------------------------------   |
+| GET   | api.pedal.cs.pdx.edu/            | Returns this README                           |
+| GET   | api.pedal.cs.pdx.edu/version     | Returns the current version of the PedalAPI   |
+| GET   | api.pedal.cs.pdx.edu/rides       | Returns all know ride ID's                    |
+| GET   | api.pedal.cs.pdx.edu/rides/{ID}  | Returns information on the specified id       |
+| GET   | api.pedal.cs.pdx.edu/kml/{ID}    | Returns a KML file of the ride                |
+| GET   | api.pedal.cs.pdx.edu/map/{ID}    | Redirects you to Google maps to view the ride |
+| POST  | api.pedal.cs.pdx.edu/rides       | Used for uploading ride information           |
+| POST  | api.pedal.cs.pdx.edu/kml         | Uses form data to construct a kml file        |
 
 Examples
 --------
 
 To Return This README:
 
-`curl -i -X GET pedal.cs.pdx.edu:5002`
+`curl -i -X GET api.pedal.cs.pdx.edu`
 
 To return all stored data pertaining to the ride under the ID 874323:
 
-`curl -i -X GET pedal.cs.pdx.edu:5002/rides/874323`
+`curl -i -X GET api.pedal.cs.pdx.edu/rides/874323`
 
-To get a custom modified KML file of the ride you may type:
+To get a custom modified KML file (using form data fields) of the ride you may type:
 
-`curl -X POST -F "color=red" -F "thickness=4" -F "id=874323" -F "start=2014-02-06 14:30" -F "end=2014-02-06 14:32" -F "accuracy=50" 127.0.0.1:5005/kml`
+`curl -X POST -F "color=red" -F "thickness=4" -F "id=874323" -F "start=2014-02-06 14:30" -F "end=2014-02-06 14:32" -F "accuracy=50" api.pedal.cs.pdx.edu/kml`
 
 The route will:
 
