@@ -22,6 +22,7 @@ Commands
 | GET   | api.pedal.cs.pdx.edu/rides/{ID}  | Returns information on the specified id       |
 | GET   | api.pedal.cs.pdx.edu/kml/{ID}    | Returns a KML file of the ride                |
 | GET   | api.pedal.cs.pdx.edu/map/{ID}    | Redirects you to Google maps to view the ride |
+| GET   | api.pedal.cs.pdx.edu/latest      | Returns the last ten rides added to the api   |
 | POST  | api.pedal.cs.pdx.edu/rides       | Used for uploading ride information           |
 | POST  | api.pedal.cs.pdx.edu/kml         | Uses form data to construct a kml file        |
 

@@ -130,7 +130,7 @@ def get_ride_by_id(ride_id):
 @app.route('/rides', methods=['POST'])
 def add_ride():
     """
-    rideURL: 127.0.0.1:5000/rides/812241
+    rideURL: 127.0.0.1/rides/812241
 
     The only POST function currently implemented is for posting rides to the
     server necessary arguments are the post version number, and a list of
@@ -226,12 +226,14 @@ def kml_maker(id, line_color, line_width, points):
     <Document>
       <name>Pedal PDX trip {0}</name>
       <description>
-       Distance: 5 Bagillion ft.\n
-       AVG Spped: Ludacris speed\n
-       Total time: 42 seconds\n
-       Num Hotties passed: 6\n
-       Donuts Burned: 22\n
-       Num songs stuck in head: 3\n
+        <![CDATA[
+          <p>Distance: 5 Bagillion ft.</p>
+          <p>AVG Spped: Ludacris speed</p>
+          <p>Total time: 42 seconds</p>
+          <p>Num Hotties passed: 6</p>
+          <p>Donuts Burned: 22</p>
+          <p>Num songs stuck in head: 3</p>
+        ]]>
       </description>
       <Style id="line">
         <LineStyle>
@@ -245,12 +247,14 @@ def kml_maker(id, line_color, line_width, points):
       <Placemark>
         <name>Pedal PDX trip {0}</name>
         <description>
-          Distance: 5 Bagillion ft.\n
-          AVG Spped: Ludacris speed\n
-          Total time: 42 seconds\n
-          Num Hotties passed: 6\n
-          Donuts Burned: 22\n
-          Num songs stuck in head: 3\n
+          <![CDATA[
+            <p>Distance: 5 Bagillion ft.</p>
+            <p>AVG Spped: Ludacris speed</p>
+            <p>Total time: 42 seconds</p>
+            <p>Num Hotties passed: 6</p>
+            <p>Donuts Burned: 22</p>
+            <p>Num songs stuck in head: 3</p>
+          ]]>
         </description>
         <styleUrl>#line</styleUrl>
         <LineString>
@@ -321,19 +325,19 @@ def get_kml(ride_id):
 def get_kml_form():
         # Make sure the POST is correctly defined
     if not request.form:
-                error_gen(400,400,"Must include form arguments")
+                return error_gen(400,400,"Must include form arguments")
     if not request.form["id"]:
-                error_gen(400,410,"Must specify ride id")
+                return error_gen(400,410,"Must specify ride id")
     if not request.form["thickness"]:
-                error_gen(400,411,"Must specify line thickness")
+                return error_gen(400,411,"Must specify line thickness")
     if not request.form['accuracy']:
-                error_gen(400,412,"Must specify accuracy threshold")
+                return error_gen(400,412,"Must specify accuracy threshold")
     if not request.form['start']:
-                error_gen(400,413,"Must specify starting time")
+                return error_gen(400,413,"Must specify starting time")
     if not request.form['end']:
-                error_gen(400,414,"Must specify ending time")
+                return error_gen(400,414,"Must specify ending time")
     if not request.form['color']:
-                error_gen(400,415,"Must specify line color")
+                return error_gen(400,415,"Must specify line color")
 
     # Accumulate the arguments
     color = request.form["color"]
@@ -355,12 +359,35 @@ def get_kml_form():
 def get_map(ride_id):
     return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+'/kml/'+ride_id,302)
 
+ 
+@app.route('/latest', methods=['GET'])
+def get_latest():
+    try:
+        # Attempt to make a connection to the Database
+        conn = psycopg2.connect(
+             "dbname=" + Secrets.dbname +
+             " user=" + Secrets.username +
+             " host=" + Secrets.hostname +
+             " password=" + Secrets.password)
+    except:
+        # On Failure, output a message saying so and retreat
+        return ""
 
+    curr = conn.cursor()
 
-# @app.route('/latest', methods=['GET'])
-# def get_map(ride_id):
-#     last = response.values.get("last")
-#     return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+':5002/kml/'+ride_id,302)
+    last = request.values.get("last")
+
+    if last:
+        query = "SELECT m.rideid, m.end FROM (Select rideid, max(time) AS end from points GROUP BY rideid) m ORDER BY m.end DESC LIMIT %s" 
+        curr.execute(query, last)
+    else:
+        query = "SELECT m.rideid, m.end FROM (Select rideid, max(time) AS end from points GROUP BY rideid) m ORDER BY m.end DESC LIMIT 10;" 
+        curr.execute(query)
+
+    rides = map(lambda (x,y): str(x), curr.fetchall())
+
+    result = {'latest': rides}
+    return make_response(jsonify(result), 200)
 
 # Main ------------------------------------------------------------------------
 
