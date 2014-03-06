@@ -18,22 +18,22 @@ API_ROOT = "/var/www/api/"
 
 # The locations from which we will be handling flat files of JSON
 # data containing the ride logs
-RIDELOCATIONS = API_ROOT + "/rides/"
+RIDE_LOCATIONS = API_ROOT + "/rides/"
 
 # Log locations
 LOG_DIR = API_ROOT + "/logs/"
 
 # Current Version
-APIVERSION = '0.4'
+API_VERSION = '0.4'
 
 # The hostname of the server the API is hosted on
-APIHOSTNAME = 'api.pedal.cs.pdx.edu'
+API_HOSTNAME = 'api.pedal.cs.pdx.edu'
 
 # Port that the API will listen on.
-APIPORT = 5001
+API_PORT = 5001
 
-# URLSTRING identifies the base for the API's URL
-URLSTRING = 'http://' + APIHOSTNAME 
+# URL_STRING identifies the base for the API's URL
+URL_STRING = 'http://' + API_HOSTNAME 
 
 # Pass the name of the app to flask
 app = Flask(__name__)
@@ -42,9 +42,9 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     """
-    redirect toe the readme file for reference.
+    Redirect to the README file for reference.
     """
-    return redirect(URLSTRING + "/README.md", 302)
+    return redirect(URL_STRING + "/README.md", 302)
 
 
 @app.route('/README.md')
@@ -63,8 +63,8 @@ def error_gen(http_stat, error_code, error_desc):
     Return a response to the requester with the given error. The HTTP code
     determines the http response code to send back. The Error code field is
     used to identify the particular issue that has been raised. The description
-    is a human readable explanation of the issue. Also returns the cuurent time of
-the server. All this information in also dumped to logs.
+    is a human readable explanation of the issue. Also returns the current time of
+    the server. All this information in also dumped to logs.
     """
     now = time.strftime("%c")
     response = {'error': str(error_desc), 
@@ -101,26 +101,26 @@ def run_locally():
 @app.route('/version', methods=['GET'])
 def get_version():
     """ Get request to return the current version of the API """
-    return jsonify({'version': str(APIVERSION)})
+    return jsonify({'version': str(API_VERSION)})
 
 
 @app.route('/rides', methods=['GET'])
 def get_all_rides():
     """ Get all of the known ride IDs """
-    return jsonify({'RideIds': listdir(RIDELOCATIONS)})
+    return jsonify({'RideIds': listdir(RIDE_LOCATIONS)})
 
 
 @app.route('/rides/<string:ride_id>', methods=['GET'])
 def get_one_ride(ride_id):
     """ Get the information on a single ride using an ID """
-    if ride_id not in listdir(RIDELOCATIONS):
+    if ride_id not in listdir(RIDE_LOCATIONS):
         return error_gen(400, 200, "Ride Not Found")
     return jsonify(get_ride_by_id(ride_id))
 
 
 def get_ride_by_id(ride_id):
     """ Get the information about a ride by using the ID number """
-    with open(RIDELOCATIONS + ride_id) as ride:
+    with open(RIDE_LOCATIONS + ride_id) as ride:
         json_data = load(ride)
         return json_data
 
@@ -191,7 +191,7 @@ def add_ride():
     else:
         while True:
             num = gen_number()
-            if num not in listdir(RIDELOCATIONS):
+            if num not in listdir(RIDE_LOCATIONS):
                 break
         ride = {
             'id': str(num),
@@ -199,9 +199,9 @@ def add_ride():
             'version': request.json['version'],
             'points': request.json['points']
         }
-        with open(RIDELOCATIONS + str(num), 'w') as data_file:
+        with open(RIDE_LOCATIONS + str(num), 'w') as data_file:
             dump(ride, data_file)
-        url_to_return = URLSTRING + '/rides/' + str(num)
+        url_to_return = URL_STRING + '/rides/' + str(num)
         return make_response(jsonify({'RideURL': url_to_return}), 201)
 
 
@@ -287,17 +287,17 @@ def query_db(ride_id, accuracy, start_time, end_time):
     args = filter(lambda x: x != "", [ride_id, accuracy, start_time, end_time])
 
     if accuracy:
-                query += " AND accuracy < %s"
+                query += " AND accuracy <= %s"
     if start_time:
-                query += " AND time > %s"
+                query += " AND time >= %s"
     if end_time:
-                query += " AND time < %s"
+                query += " AND time <= %s"
 
     # Create a psycopg2 cursor for the DB
     curr = conn.cursor()
 
     curr.execute(query, args)
-    points = map(lambda (x,y): (str(x), str(y)), curr.fetchall())
+    points = map(lambda (x,y): (str(y), str(x)), curr.fetchall())
 
     # End the cursor
     curr.close()
@@ -307,7 +307,7 @@ def query_db(ride_id, accuracy, start_time, end_time):
 
 @app.route('/kml/<string:ride_id>', methods=['GET'])
 def get_kml(ride_id):
-    if ride_id not in listdir(RIDELOCATIONS):
+    if ride_id not in listdir(RIDE_LOCATIONS):
                 return error_gen(400, 200, "Ride Not Found")
     json_data = get_ride_by_id(ride_id)
     point_field = json_data['points']
@@ -346,18 +346,27 @@ def get_kml_form():
     accuracy = request.form["accuracy"]
     start = request.form["start"]
     end = request.form["end"]
-
     points = query_db(ride_id, accuracy, start, end)
-
     kml_string = kml_maker(ride_id, color, thick, points)
     response = make_response(kml_string)
     response.headers["Content-Type"] = "application/kml"
     return response
 
 
+@app.route('/clean/<string:ride_id>', methods=['GET'])
+def get_cleaned(ride_id):
+    acc = request.values.get("accuracy")
+    if not acc:
+	acc = "20"
+    points = query_db(ride_id, acc, "", "")
+    kml_string = kml_maker(ride_id, "7f00ff00", "9", points)
+    response = make_response(kml_string)
+    response.headers["Content-Type"] = "application/kml"
+    return response
+     
 @app.route('/map/<string:ride_id>', methods=['GET'])
 def get_map(ride_id):
-    return redirect('https://maps.google.com/maps?q=http://'+APIHOSTNAME+'/kml/'+ride_id,302)
+    return redirect('https://maps.google.com/maps?q=http://'+API_HOSTNAME+'/kml/'+ride_id,302)
 
  
 @app.route('/latest', methods=['GET'])
@@ -384,13 +393,17 @@ def get_latest():
         query = "SELECT m.rideid, m.end FROM (Select rideid, max(time) AS end from points GROUP BY rideid) m ORDER BY m.end DESC LIMIT 10;" 
         curr.execute(query)
 
-    rides = map(lambda (x,y): str(x), curr.fetchall())
+    rides = map(lambda (x,y): (str(x), str(y)), curr.fetchall())
 
     result = {'latest': rides}
     return make_response(jsonify(result), 200)
+
+
+
+
 
 # Main ------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=APIPORT)
+    app.run(debug=True, port=API_PORT)
