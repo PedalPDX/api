@@ -9,9 +9,11 @@ from random import randint
 from os import listdir
 from json import dump, load
 from markdown import markdown
+from simplekml import Kml
 import time
 import Secrets
 import psycopg2
+
 
 # API root Directory
 API_ROOT = "/var/www/api/"
@@ -209,65 +211,32 @@ def gen_number():
     """ Generate a random 6 digit number """
     return randint(100000, 999999)
 
-def kml_maker(id, line_color, line_width, points):
-    """
-    kml_maker is in charge of making a kml string that can be returned through
-    the API upon request
-    """
-    points_string = ""
-    for (lng,lat) in points:
-        s = lng + "," + lat + ',0'
-        if not points_string:
-            points_string = s
-        else:
-            points_string += '\n            ' + s
-    kml ="""<?xml version="1.0" encoding="UTF-8"?>
-  <kml xmlns="http://www.opengis.net/kml/2.2">
-    <Document>
-      <name>Pedal PDX trip {0}</name>
-      <description>
-        <![CDATA[
-          <p>Distance: 5 Bagillion ft.</p>
-          <p>AVG Spped: Ludacris speed</p>
-          <p>Total time: 42 seconds</p>
-          <p>Num Hotties passed: 6</p>
-          <p>Donuts Burned: 22</p>
-          <p>Num songs stuck in head: 3</p>
-        ]]>
-      </description>
-      <Style id="line">
-        <LineStyle>
-          <color>{1}</color>
-          <width>{2}</width>
-        </LineStyle>
-        <PolyStyle>
-          <color>7f00ff00</color>
-        </PolyStyle>
-      </Style>
-      <Placemark>
-        <name>Pedal PDX trip {0}</name>
-        <description>
-          <![CDATA[
-            <p>Distance: 5 Bagillion ft.</p>
-            <p>AVG Spped: Ludacris speed</p>
-            <p>Total time: 42 seconds</p>
-            <p>Num Hotties passed: 6</p>
-            <p>Donuts Burned: 22</p>
-            <p>Num songs stuck in head: 3</p>
-          ]]>
-        </description>
-        <styleUrl>#line</styleUrl>
-        <LineString>
-          <extrude>1</extrude>
-          <tessellate>1</tessellate>
-          <altitudeMode>absolute</altitudeMode>
-          <coordinates>
-            {3}
-          </coordinates>
-        </LineString>
-      </Placemark>
-    </Document>
-  </kml>""".format(id, line_color, line_width, points_string)
+
+def kml_maker_2(ride_id, color, width, stats, points):
+    icon_url = "http://www.clker.com/cliparts/r/J/F/7/y/4/placemark-hi.png"
+    kml = Kml()
+    if len(points) > 1:
+        s = kml.newpoint(name='Start')
+        s.coords = [points[0]]
+        s.style.iconstyle.scale = 1
+        s.style.iconstyle.icon.href = icon_url
+        e = kml.newpoint(name='end')
+        e.coords = [points[-1]]
+        e.style.iconstyle.scale = 1
+        e.style.iconstyle.icon.href = icon_url
+    ls = kml.newlinestring(name = "Ride - " + ride_id)
+    ls.description = "INSTER STATS STRING"
+    ls.coords = points
+    ls.style.linestyle.width = 10
+    ls.style.linestyle.color = "f7ff00ff"
+    if color:
+        ls.style.linestyle.color = color
+    if width:
+        ls.style.linestyle.width = width
+    if 'start' in stats:
+        ls.timespan.begin = stats['start']
+    if 'end' in stats:
+        ls.timespan.end = stats['end']
     return kml
 
 
@@ -305,6 +274,7 @@ def query_db(ride_id, accuracy, start_time, end_time):
     conn.close()
     return points
 
+
 @app.route('/kml/<string:ride_id>', methods=['GET'])
 def get_kml(ride_id):
     if ride_id not in listdir(RIDE_LOCATIONS):
@@ -314,11 +284,22 @@ def get_kml(ride_id):
     points = []
     for p in point_field:
                 points.append((str(p['longitude']),str(p['latitude'])))
-    kml_string = kml_maker(ride_id, "7fff0000", "9", points)
-    response = make_response(kml_string)
+    kml_string = kml_maker_2(ride_id, "7fff0000", "9", {}, points)
+    response = make_response(kml_string.kml())
     response.headers["Content-Type"] = "application/kml"
     return response
 
+
+@app.route('/kml2/<string:ride_id>', methods=['GET'])
+def new_kml(ride_id):
+    acc = request.values.get("accuracy")
+    if not acc:
+	acc = "20"
+    points = query_db(ride_id, acc, "", "")
+    kmel = kml_maker_2(ride_id, "", "", {}, points)
+    response = make_response(kmel.kml())
+    response.headers["Content-Type"] = "application/kml"
+    return response
 
 
 @app.route('/kml', methods=['POST'])
@@ -347,8 +328,8 @@ def get_kml_form():
     start = request.form["start"]
     end = request.form["end"]
     points = query_db(ride_id, accuracy, start, end)
-    kml_string = kml_maker(ride_id, color, thick, points)
-    response = make_response(kml_string)
+    kml_string = kml_maker_2(ride_id, color, thick, {}, points)
+    response = make_response(kml_string.kml())
     response.headers["Content-Type"] = "application/kml"
     return response
 
@@ -359,8 +340,8 @@ def get_cleaned(ride_id):
     if not acc:
 	acc = "20"
     points = query_db(ride_id, acc, "", "")
-    kml_string = kml_maker(ride_id, "7f00ff00", "9", points)
-    response = make_response(kml_string)
+    kml_string = kml_maker_2(ride_id, "7f00ff00", "9", {}, points)
+    response = make_response(kml_string.kml())
     response.headers["Content-Type"] = "application/kml"
     return response
      
@@ -383,7 +364,6 @@ def get_latest():
         return ""
 
     curr = conn.cursor()
-
     last = request.values.get("last")
 
     if last:
@@ -394,13 +374,11 @@ def get_latest():
         curr.execute(query)
 
     rides = map(lambda (x,y): (str(x), str(y)), curr.fetchall())
-
     result = {'latest': rides}
     return make_response(jsonify(result), 200)
 
 
-
-
+    
 
 # Main ------------------------------------------------------------------------
 

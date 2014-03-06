@@ -6,6 +6,7 @@ Depends
 * Flask
 * Markdown
 * psycopg2
+* simplekml
 
 About the API
 -------------
