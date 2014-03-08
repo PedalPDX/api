@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """
 PedalAPI
 
@@ -13,6 +14,7 @@ from simplekml import Kml
 import time
 import Secrets
 import psycopg2
+import psycopg2.extras
 
 
 # API root Directory
@@ -225,7 +227,19 @@ def kml_maker_2(ride_id, color, width, stats, points):
         e.style.iconstyle.scale = 1
         e.style.iconstyle.icon.href = icon_url
     ls = kml.newlinestring(name = "Ride - " + ride_id)
-    ls.description = "INSTER STATS STRING"
+
+    (rid, sp, ep, st, et, dur, dis) = stats[0]
+    desc = "<![CDATA["
+    desc += "<p>rideId   : " + str(rid) + "</p>"
+    desc += "<p>Start    : " + str(sp) + "</p>"
+    desc += "<p>End      : " + str(ep) + "</p>"
+    desc += "<p>Began    : " + str(st) + "</p>"
+    desc += "<p>Stopped  : " + str(et) + "</p>"
+    desc += "<p>Duration : " + str(dur) + "</p>"
+    desc += "<p>Distance : " + str(dis) + "</p>"
+    desc += "]]>"
+    ls.description = desc
+
     ls.coords = points
     ls.style.linestyle.width = 10
     ls.style.linestyle.color = "f7ff00ff"
@@ -252,6 +266,7 @@ def query_db(ride_id, accuracy, start_time, end_time):
         # On Failure, output a message saying so and retreat
         return ""
 
+    statsq = "SELECT * FROM stats_view WHERE rideid = %s"
     query = "SELECT ST_X(point), ST_Y(point) FROM points WHERE rideid = %s"
     args = filter(lambda x: x != "", [ride_id, accuracy, start_time, end_time])
 
@@ -266,37 +281,40 @@ def query_db(ride_id, accuracy, start_time, end_time):
     curr = conn.cursor()
 
     curr.execute(query, args)
-    points = map(lambda (x,y): (str(y), str(x)), curr.fetchall())
+    points = map(lambda (x,y): (str(x), str(y)), curr.fetchall())
+
+    curr.execute(statsq, [ride_id])
+    stats = curr.fetchall()
 
     # End the cursor
     curr.close()
     # End the connection to the DB
     conn.close()
-    return points
+    return (points, stats)
+
+
+# @app.route('/kml/<string:ride_id>', methods=['GET'])
+# def get_kml(ride_id):
+#     if ride_id not in listdir(RIDE_LOCATIONS):
+#                 return error_gen(400, 200, "Ride Not Found")
+#     json_data = get_ride_by_id(ride_id)
+#     point_field = json_data['points']
+#     points = []
+#     for p in point_field:
+#                 points.append((str(p['longitude']),str(p['latitude'])))
+#     kml_string = kml_maker_2(ride_id, "7fff0000", "9", {}, points)
+#     response = make_response(kml_string.kml())
+#     response.headers["Content-Type"] = "application/kml"
+#     return response
 
 
 @app.route('/kml/<string:ride_id>', methods=['GET'])
-def get_kml(ride_id):
-    if ride_id not in listdir(RIDE_LOCATIONS):
-                return error_gen(400, 200, "Ride Not Found")
-    json_data = get_ride_by_id(ride_id)
-    point_field = json_data['points']
-    points = []
-    for p in point_field:
-                points.append((str(p['longitude']),str(p['latitude'])))
-    kml_string = kml_maker_2(ride_id, "7fff0000", "9", {}, points)
-    response = make_response(kml_string.kml())
-    response.headers["Content-Type"] = "application/kml"
-    return response
-
-
-@app.route('/kml2/<string:ride_id>', methods=['GET'])
 def new_kml(ride_id):
     acc = request.values.get("accuracy")
     if not acc:
 	acc = "20"
-    points = query_db(ride_id, acc, "", "")
-    kmel = kml_maker_2(ride_id, "", "", {}, points)
+    points, stats = query_db(ride_id, acc, "", "")
+    kmel = kml_maker_2(ride_id, "", "", stats, points)
     response = make_response(kmel.kml())
     response.headers["Content-Type"] = "application/kml"
     return response
@@ -327,8 +345,8 @@ def get_kml_form():
     accuracy = request.form["accuracy"]
     start = request.form["start"]
     end = request.form["end"]
-    points = query_db(ride_id, accuracy, start, end)
-    kml_string = kml_maker_2(ride_id, color, thick, {}, points)
+    points, stats = query_db(ride_id, accuracy, start, end)
+    kml_string = kml_maker_2(ride_id, color, thick, stats, points)
     response = make_response(kml_string.kml())
     response.headers["Content-Type"] = "application/kml"
     return response
@@ -339,8 +357,8 @@ def get_cleaned(ride_id):
     acc = request.values.get("accuracy")
     if not acc:
 	acc = "20"
-    points = query_db(ride_id, acc, "", "")
-    kml_string = kml_maker_2(ride_id, "7f00ff00", "9", {}, points)
+    points, stats = query_db(ride_id, acc, "", "")
+    kml_string = kml_maker_2(ride_id, "7f00ff00", "9", stats, points)
     response = make_response(kml_string.kml())
     response.headers["Content-Type"] = "application/kml"
     return response

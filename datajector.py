@@ -156,7 +156,7 @@ def add_ride(ride_id):
                 # Make an attempt to add the point to the DB
                 curr.execute(
                     INSERT_TO_POINTS,
-                    (ride_id, point_acc, point_time, point_lat, point_long))
+                    (ride_id, point_acc, point_time, point_long, point_lat))
             except:
                 # If a point fails, log, rollback, and return
                 loggit('DB_ERROR',
@@ -191,6 +191,7 @@ if __name__ == '__main__':
     # add the rides that need to be added
     for ride in to_add:
         add_ride(ride)
+	
 
     # Ensure that any changes made to the DB Persist
     conn.commit()
