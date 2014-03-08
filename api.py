@@ -11,6 +11,7 @@ from os import listdir
 from json import dump, load
 from markdown import markdown
 from simplekml import Kml
+import re
 import time
 import Secrets
 import psycopg2
@@ -229,14 +230,27 @@ def kml_maker_2(ride_id, color, width, stats, points):
     ls = kml.newlinestring(name = "Ride - " + ride_id)
 
     (rid, sp, ep, st, et, dur, dis) = stats[0]
+
+    hour,mins,sec = re.split(':', str(dur))
+    seconds = (((float(hour) * 60) + float(mins)) * 60) + float(sec)
+
+    start_long, start_lat = re.findall('-?[0-9]+\.[0-9]+', sp)
+    end_long, end_lat = re.findall('-?[0-9]+\.[0-9]+', ep)
+
+    miles = float(dis) * 0.0006213
+    avg_speed = miles / ((seconds / 60) / 60)
+    calories = miles * 50
+	
     desc = "<![CDATA["
-    desc += "<p>rideId   : " + str(rid) + "</p>"
-    desc += "<p>Start    : " + str(sp) + "</p>"
-    desc += "<p>End      : " + str(ep) + "</p>"
-    desc += "<p>Began    : " + str(st) + "</p>"
-    desc += "<p>Stopped  : " + str(et) + "</p>"
-    desc += "<p>Duration : " + str(dur) + "</p>"
-    desc += "<p>Distance : " + str(dis) + "</p>"
+    desc += "<p>Start Point : Latitude=" + str.format('{0:.5f}', float(start_lat)) + ", Longitude=" + str.format('{0:.5f}', float(start_long))+ "</p>"
+    desc += "<p>End Point : Latitude=" + str.format('{0:.5f}', float(end_lat)) + ", Longitude=" + str.format('{0:.5f}', float(end_long))+ "</p>"
+    desc += "<p>Began : " + str(st) + "</p>"
+    desc += "<p>Stopped : " + str(et) + "</p>"
+    desc += "<p>Duration : " + hour + "h " + mins + "m " + sec + "s" + "</p>"
+    desc += "<p>Distance : " + str(miles) + " Miles" + "</p>"
+    desc += "<p>Avgerage Speed : " + str.format('{0:.1f}', (avg_speed)) + " Miles per Hour</p>"
+    desc += "<p>Calories : " + str(calories) + " cal" + "</p>"
+    desc += "<p>Portland Cremes Burned : " + str(calories / 300) + "</p>"
     desc += "]]>"
     ls.description = desc
 
