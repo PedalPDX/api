@@ -3,7 +3,6 @@ Jinja2==2.7.2
 Markdown==2.3.1
 MarkupSafe==0.18
 Werkzeug==0.9.4
-argparse==1.2.1
 itsdangerous==0.23
 pygeoif==0.4.1
 python-dateutil==2.2

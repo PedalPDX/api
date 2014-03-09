@@ -1,3 +1,5 @@
+#!/bin/bash
+
 rm -rf venv
 virtualenv -p /usr/bin/python2.7 --distribute venv
 . venv/bin/activate

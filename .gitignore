@@ -1,10 +1,11 @@
 # Local Files
 *.py[cod]
 rides/*
+logs/*
 Secrets.py
-venv/*
 *.swp
 logs/*
+VirtualEnvironment/venv/*
 
 # C extensions
 *.so
