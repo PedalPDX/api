@@ -15,17 +15,18 @@ This API is for use by the [PedalPDXApplication](http://pedal.cs.pdx.edu) bicycl
 Commands
 --------
 
-| Type  | Command                          | Result                                        |
-| :---- | :------------------------------- | :------------------------------------------   |
-| GET   | api.pedal.cs.pdx.edu/            | Returns this README                           |
-| GET   | api.pedal.cs.pdx.edu/version     | Returns the current version of the PedalAPI   |
-| GET   | api.pedal.cs.pdx.edu/rides       | Returns all know ride ID's                    |
-| GET   | api.pedal.cs.pdx.edu/rides/{ID}  | Returns information on the specified id       |
-| GET   | api.pedal.cs.pdx.edu/kml/{ID}    | Returns a KML file of the ride                |
-| GET   | api.pedal.cs.pdx.edu/map/{ID}    | Redirects you to Google maps to view the ride |
-| GET   | api.pedal.cs.pdx.edu/latest      | Returns the last ten rides added to the api   |
-| POST  | api.pedal.cs.pdx.edu/rides       | Used for uploading ride information           |
-| POST  | api.pedal.cs.pdx.edu/kml         | Uses form data to construct a kml file        |
+| Type  | Command                          | Result                                           |
+| :---- | :------------------------------- | :----------------------------------------------- |
+| GET   | api.pedal.cs.pdx.edu/            | Returns this README                              |
+| GET   | api.pedal.cs.pdx.edu/version     | Returns the current version of the PedalAPI      |
+| GET   | api.pedal.cs.pdx.edu/rides       | Returns all know ride ID's                       |
+| GET   | api.pedal.cs.pdx.edu/rides/{ID}  | Returns information on the specified id          |
+| GET   | api.pedal.cs.pdx.edu/kml/{ID}    | Returns a KML file of the ride                   |
+| GET   | api.pedal.cs.pdx.edu/map/{ID}    | Redirects you to Google maps to view the ride    |
+| GET   | api.pedal.cs.pdx.edu/latest      | Returns the last ten rides added to the api      |
+| GET   | api.pedal.cs.pdx.edu/all         | Returns KML file containing every ride in the DB |
+| POST  | api.pedal.cs.pdx.edu/rides       | Used for uploading ride information              |
+| POST  | api.pedal.cs.pdx.edu/kml         | Uses form data to construct a kml file           |
 
 Examples
 --------
