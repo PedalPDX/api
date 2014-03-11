@@ -12,7 +12,7 @@ About the API
 -------------
 This API is for use by the [PedalPDXApplication](http://pedal.cs.pdx.edu) bicycle route tracking application.
 
-<iframe width="640" height="530" src="//www.youtube.com/embed/Hzo3JjxoVak" frameborder="0" allowfullscreen></iframe>
+<iframe width="640" height="530" src="//www.youtube.com/embed/Hzo3JjxoVak/?rel=0" rel="0" frameborder="0" allowfullscreen></iframe>
 
 Commands
 --------
