@@ -16,6 +16,7 @@ import time
 import Secrets
 import psycopg2
 import psycopg2.extras
+import random as rand
 
 
 # API root Directory
@@ -410,6 +411,98 @@ def get_latest():
     return make_response(jsonify(result), 200)
 
 
+@app.route('/all', methods=['GET'])
+def kml_maker_all():
+    try:
+        # Attempt to make a connection to the Database
+        conn = psycopg2.connect(
+             "dbname=" + Secrets.dbname +
+             " user=" + Secrets.username +
+             " host=" + Secrets.hostname +
+             " password=" + Secrets.password)
+    except:
+        # On Failure, output a message saying so and retreat
+        return ""
+
+
+    # Create a psycopg2 cursor for the DB
+    curr = conn.cursor()
+
+    query = "SELECT rideid FROM rides"  
+    curr.execute(query)
+
+    all_routes = []
+    
+    for ride in curr.fetchall():
+	pointQ = "SELECT ST_X(point) AS long, ST_Y(point) AS LAT FROM points WHERE rideid = %s AND accuracy <= 20"
+	statsQ = "SELECT * from stats_view WHERE rideid = %s"
+	curr.execute(pointQ, ride)
+	points = curr.fetchall()
+        if points:
+	    curr.execute(statsQ, ride)
+	    stats = curr.fetchall()
+            all_routes.append((ride, points, stats))
+
+    # End the cursor
+    curr.close()
+    # End the connection to the DB
+    conn.close()
+
+    icon_url = "http://www.clker.com/cliparts/r/J/F/7/y/4/placemark-hi.png"
+    kml = Kml()
+
+    for (rideid, points, stats) in all_routes:
+        # s = kml.newpoint(name='Start')
+        # s.coords = [points[0]]
+        # s.style.iconstyle.scale = 1
+        # s.style.iconstyle.icon.href = icon_url
+        # e = kml.newpoint(name='end')
+        # e.coords = [points[-1]]
+        # e.style.iconstyle.scale = 1
+        # e.style.iconstyle.icon.href = icon_url
+
+	if not stats:
+	    continue
+
+        (rid, sp, ep, st, et, dur, dis) = stats[0]
+
+        hour,mins,sec = re.split(':', str(dur))
+        seconds = (((float(hour) * 60) + float(mins)) * 60) + float(sec)
+
+        start_long, start_lat = re.findall('-?[0-9]+\.[0-9]+', sp)
+        end_long, end_lat = re.findall('-?[0-9]+\.[0-9]+', ep)
+
+        try:
+            miles = float(dis) * 0.0006213
+            avg_speed = miles / ((seconds / 60) / 60)
+            calories = miles * 50
+        except:
+            continue
+            
+        desc = "<![CDATA["
+        desc += "<p>Start Point : Latitude=" + str.format('{0:.5f}', float(start_lat)) + ", Longitude=" + str.format('{0:.5f}', float(start_long))+ "</p>"
+        desc += "<p>End Point : Latitude=" + str.format('{0:.5f}', float(end_lat)) + ", Longitude=" + str.format('{0:.5f}', float(end_long))+ "</p>"
+        desc += "<p>Began : " + str(st) + "</p>"
+        desc += "<p>Stopped : " + str(et) + "</p>"
+        desc += "<p>Duration : " + hour + "h " + mins + "m " + sec + "s" + "</p>"
+        desc += "<p>Distance : " + str(miles) + " Miles" + "</p>"
+        desc += "<p>Avgerage Speed : " + str.format('{0:.1f}', (avg_speed)) + " Miles per Hour</p>"
+        desc += "<p>Calories : " + str(calories) + " cal" + "</p>"
+        desc += "<p>Portland Cremes Burned : " + str(calories / 300) + "</p>"
+        desc += "]]>"
+
+        rand_color = rand.sample(['1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'], 8)
+
+        ls = kml.newlinestring(name = "Ride - " + str(rideid[0]))
+        ls.description = desc
+        ls.coords = points
+        ls.style.linestyle.width = 5
+        ls.style.linestyle.colormode = 'random'
+        ls.style.linestyle.color = ''.join(rand_color)
+
+    response = make_response(kml.kml())
+    response.headers["Content-Type"] = "application/kml"
+    return response
     
 
 # Main ------------------------------------------------------------------------
